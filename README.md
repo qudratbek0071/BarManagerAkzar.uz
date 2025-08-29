@@ -1,0 +1,2 @@
+# BarManagerAkzar.uz
+bar Manager
