@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CBar — Панель бара</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="toast"></div>
+
+    <section id="login" class="screen visible">
+      <div class="card login-card">
+        <h1>CBar</h1>
+        <p class="muted">Вход в систему</p>
+        <label>
+          <span>Email</span>
+          <input id="email" type="email" placeholder="email" />
+        </label>
+        <label>
+          <span>Пароль</span>
+          <input id="password" type="password" placeholder="пароль" />
+        </label>
+        <div class="row">
+          <input id="apiUrl" type="text" placeholder="API URL (например, http://localhost:5500)" />
+          <button id="saveApi" class="btn btn-ghost">Сохранить API</button>
+        </div>
+        <button id="doLogin" class="btn btn-primary">Войти</button>
+      </div>
+    </section>
+
+    <section id="app" class="screen">
+      <header class="app-header">
+        <div class="brand">CBar</div>
+        <nav class="tabs">
+          <button data-tab="floors" class="tab active">Этажи</button>
+          <button data-tab="reports" class="tab">Отчёты</button>
+          <button data-tab="leaderboard" class="tab">Лидерборд</button>
+          <button data-tab="admin" class="tab admin-only">Админ</button>
+        </nav>
+        <div class="userbox">
+          <button id="editApi" class="btn btn-ghost">API</button>
+          <span id="userInfo"></span>
+          <button id="logout" class="btn btn-ghost">Выйти</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <div id="tab-floors" class="tab-panel visible">
+          <div class="floor-switch">
+            <button class="chip" data-floor="zal">Зал</button>
+            <button class="chip" data-floor="tepa">Тепа</button>
+            <button class="chip" data-floor="karaoke">Караоке</button>
+          </div>
+          <div class="toolbar">
+            <h2 id="floorTitle">Зал</h2>
+            <div id="karaokeTools" class="hidden">
+              <button id="addKaraokeTable" class="btn btn-primary">Добавить стол</button>
+            </div>
+          </div>
+          <div id="tables" class="grid"></div>
+        </div>
+
+        <div id="tab-reports" class="tab-panel">
+          <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+            <h3 style="margin:0">Отчёты за сегодня</h3>
+            <button id="btnRefreshReports" class="btn btn-ghost">Обновить</button>
+          </div>
+          <div class="cards">
+            <div class="card stat">
+              <div class="stat-title">Продажи сегодня</div>
+              <div id="statSales" class="stat-value">0</div>
+            </div>
+            <div class="card stat">
+              <div class="stat-title">Не оплачено</div>
+              <div id="statUnpaid" class="stat-value">0</div>
+            </div>
+            <div class="card stat">
+              <div class="stat-title">Низкие остатки</div>
+              <div id="statLow" class="stat-value">0</div>
+            </div>
+          </div>
+          <div class="col" style="margin-bottom:12px">
+            <h3>По дням</h3>
+            <table class="table">
+              <thead><tr><th>Дата</th><th>Продажи</th><th>Не оплачено</th><th>Заказы</th></tr></thead>
+              <tbody id="dailyBody"></tbody>
+            </table>
+          </div>
+          <div class="flex-columns">
+            <div class="col">
+              <h3>Остатки</h3>
+              <table class="table">
+                <thead><tr><th>Товар</th><th>Категория</th><th>Остаток</th><th>Продано</th><th class="admin-only">Действия</th></tr></thead>
+                <tbody id="stockBody"></tbody>
+              </table>
+              <h3 style="margin-top:12px">Займы сотрудников (не возвращено)</h3>
+              <table class="table">
+                <thead><tr><th>Сотрудник</th><th>Товар</th><th>Взял</th><th>Вернул</th><th>Долг</th></tr></thead>
+                <tbody id="borrowBody"></tbody>
+              </table>
+            </div>
+            <div class="col">
+              <div class="row" style="justify-content:space-between;align-items:center">
+                <h3>История (сегодня)</h3>
+                <button id="btnDeleteAllOrders" class="btn btn-danger admin-only">Удалить все</button>
+              </div>
+              <div id="history" class="history"></div>
+              <h3 style="margin-top:12px">Продажи по товарам</h3>
+              <div class="row" style="gap:8px;margin-bottom:6px">
+                <input id="sbpFrom" type="date" />
+                <input id="sbpTo" type="date" />
+                <button id="sbpReload" class="btn btn-ghost">Показать</button>
+              </div>
+              <table class="table">
+                <thead><tr><th>Товар</th><th>Кол-во</th><th>Сумма</th></tr></thead>
+                <tbody id="sbpBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-leaderboard" class="tab-panel">
+          <h3>Кто больше продал</h3>
+          <table class="table">
+            <thead><tr><th>Сотрудник</th><th>Сумма</th><th>Заказы</th></tr></thead>
+            <tbody id="lbBody"></tbody>
+          </table>
+        </div>
+
+        <div id="tab-admin" class="tab-panel">
+          <div class="flex-columns">
+            <div class="col">
+              <h3>Меню</h3>
+              <form id="menuForm" class="form-inline">
+                <input id="menuName" type="text" placeholder="Название" />
+                <input id="menuPrice" type="number" placeholder="Цена" />
+                <select id="menuCat"><option value="drink">Напиток</option><option value="snack">Закуска</option><option value="dish">Блюдо</option></select>
+                <input id="menuStock" type="number" placeholder="Старт. остаток" />
+                <button class="btn btn-primary" type="submit">Добавить</button>
+              </form>
+              <div id="menuList" class="list"></div>
+              <h3 style="margin-top:12px">Приход / Остатки</h3>
+              <form id="stockForm" class="form-inline">
+                <select id="stockProduct"></select>
+                <input id="stockQty" type="number" placeholder="Кол-во" />
+                <select id="stockType"><option value="incoming">Приход</option><option value="opening">Ввод остатков</option><option value="adjustment">Корректировка</option></select>
+                <button class="btn btn-secondary" type="submit">Добавить приход</button>
+              </form>
+              <h3 style="margin-top:12px">Выдать сотруднику (заем)</h3>
+              <form id="borrowForm" class="form-inline">
+                <select id="borrowUser"></select>
+                <select id="borrowProduct"></select>
+                <input id="borrowQty" type="number" placeholder="Кол-во" />
+                <button class="btn btn-warning" type="submit">Выдать</button>
+              </form>
+              <h3 style="margin-top:12px">Принять возврат</h3>
+              <form id="returnForm" class="form-inline">
+                <input id="returnBorrowId" type="number" placeholder="ID займа" />
+                <input id="returnQty" type="number" placeholder="Кол-во" />
+                <button class="btn btn-success" type="submit">Принять</button>
+              </form>
+
+              <h3 style="margin-top:12px">История приходов</h3>
+              <table class="table">
+                <thead><tr><th>ID</th><th>Товар</th><th>Кол-во</th><th>Тип</th><th>Дата</th><th class="admin-only">Действия</th></tr></thead>
+                <tbody id="stockEntriesBody"></tbody>
+              </table>
+            </div>
+            <div class="col">
+              <h3>Сотрудники</h3>
+              <form id="userForm" class="form-inline">
+                <input id="uName" type="text" placeholder="Имя" />
+                <input id="uEmail" type="email" placeholder="Email" />
+                <input id="uPass" type="password" placeholder="Пароль" />
+                <select id="uRole"><option value="waiter">Официант</option><option value="boss">Босс</option><option value="admin">Админ</option></select>
+                <select id="uFloor"><option value="">—</option><option value="zal">Зал</option><option value="tepa">Тепа</option><option value="karaoke">Караоке</option></select>
+                <button class="btn btn-primary" type="submit">Добавить</button>
+              </form>
+              <div id="usersList" class="list"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </section>
+
+    <div id="drawer" class="drawer">
+      <div class="drawer-content card">
+        <div class="drawer-header">
+          <h3 id="drawerTitle">Стол</h3>
+          <button id="drawerClose" class="btn btn-ghost">✕</button>
+        </div>
+        <div class="drawer-body">
+          <div class="drawer-columns">
+            <div class="col">
+              <div class="filters">
+                <select id="filterCat"><option value="all">Все</option><option value="drink">Напитки</option><option value="snack">Закуски</option><option value="dish">Блюда</option></select>
+                <input id="filterQ" type="text" placeholder="Поиск..." />
+              </div>
+              <div id="menuCards" class="grid"></div>
+            </div>
+            <div class="col">
+              <h4>Текущий заказ</h4>
+              <div id="orderItems" class="list"></div>
+              <div class="order-total"><span>Итого:</span> <strong id="orderSum">0</strong></div>
+              <div class="order-actions">
+                <button id="btnPay" class="btn btn-success">Оплатить</button>
+                <button id="btnPrint" class="btn btn-secondary">Печать чека</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
